@@ -1,19 +1,23 @@
 import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
+import '@/style.css'
+import App from '@/App.vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import Login from '@pages/Login.vue'
+import Dashboard from '@pages/Dashboard.vue'
+import CreateOrganization from '@pages/CreateOrganization.vue'
+import '@libs/Firebase'
+import MyOrganizations from '@pages/MyOrganizations.vue'
+import Register from './pages/Register.vue'
 
-createApp(App).mount('#app')
+const router = createRouter({
+	history: createWebHistory(),
+	routes: [
+		{ path: '/', component: Login },
+		{ path: '/register', component: Register },
+		{ path: '/dashboard', component: Dashboard },
+		{ path: '/create-organization', component: CreateOrganization },
+		{ path: '/my-organizations', component: MyOrganizations },
+	],
+})
 
-import { initializeApp } from 'firebase/app'
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-const firebaseConfig = {
-	apiKey: 'AIzaSyBEJPrkIu_qSEVL-gjQ0RUpwoMlC7IyO-4',
-	authDomain: 'shifter-34852.firebaseapp.com',
-	projectId: 'shifter-34852',
-	storageBucket: 'shifter-34852.appspot.com',
-	messagingSenderId: '35646851933',
-	appId: '1:35646851933:web:2eec85b5ab5230db9b76b4',
-}
-
-const app = initializeApp(firebaseConfig)
+createApp(App).use(router).mount('#app')
