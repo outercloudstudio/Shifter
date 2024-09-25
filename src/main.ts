@@ -7,7 +7,8 @@ import Dashboard from '@pages/Dashboard.vue'
 import CreateOrganization from '@pages/CreateOrganization.vue'
 import '@libs/Firebase'
 import MyOrganizations from '@pages/MyOrganizations.vue'
-import Register from './pages/Register.vue'
+import Register from '@pages/Register.vue'
+import Organization from '@pages/Organization.vue'
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -17,6 +18,7 @@ const router = createRouter({
 		{ path: '/dashboard', component: Dashboard },
 		{ path: '/create-organization', component: CreateOrganization },
 		{ path: '/my-organizations', component: MyOrganizations },
+		{ path: '/organization/:id', component: Organization },
 	],
 })
 
