@@ -13,12 +13,13 @@ import Organization from '@pages/Organization.vue'
 const router = createRouter({
 	history: createWebHistory(),
 	routes: [
-		{ path: '/', component: Login },
+		{ path: '/', component: Home },
 		{ path: '/register', component: Register },
 		{ path: '/dashboard', component: Dashboard },
 		{ path: '/create-organization', component: CreateOrganization },
 		{ path: '/my-organizations', component: MyOrganizations },
 		{ path: '/organization/:id', component: Organization },
+		{ path: '/login', component: Login}
 	],
 })
 
