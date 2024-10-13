@@ -1,3 +1,16 @@
+# Pages
+
+- [ ] Welcome
+- [ ] Login
+- [ ] Signup
+- [ ] Dashboard
+      Shifts you have. Available trades. Requested Trades. Approved Trades.
+- [ ] Calendar
+- [ ] Trades
+- [ ] Admin
+      Approve Trades, Manage organization members
+- [ ] Account Page
+
 # API
 
 ## What needs to be implemented
