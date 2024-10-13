@@ -322,6 +322,27 @@ export async function changeShiftTime(shift: Shift, day: Date, time: 'day' | 'ni
 	})
 }
 
+export async function getShifts(organization: Organization): Promise<Shift[]> {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	const shifts: Shift[] = []
+
+	const shiftQuery = query(collection(db, `organizations/${organization.id}/shifts`))
+
+	const shiftDocs = await getDocs(shiftQuery)
+	for (const document of shiftDocs.docs) {
+		const data = document.data() as Shift
+		data.id = document.id
+		data.organization = organization
+
+		shifts.push(data)
+	}
+
+	return shifts
+}
+
 export async function createTrade(
 	organization: Organization,
 	from: string,
@@ -388,4 +409,25 @@ export async function approveTrade(trade: Trade) {
 	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
 
 	await changeTradeApproval(trade, true)
+}
+
+export async function getTrades(organization: Organization): Promise<Trade[]> {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	const trades: Trade[] = []
+
+	const tradeQuery = query(collection(db, `organizations/${organization.id}/trades`))
+
+	const tradeDocs = await getDocs(tradeQuery)
+	for (const document of tradeDocs.docs) {
+		const data = document.data() as Trade
+		data.id = document.id
+		data.organization = organization
+
+		trades.push(data)
+	}
+
+	return trades
 }
