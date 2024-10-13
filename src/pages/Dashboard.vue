@@ -1,9 +1,9 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-<h1>Dashboard</h1>
-<router-link to="create-organization">Create Organization</router-link>
-<br>
-<router-link to="my-organizations">My Organizations</router-link>
+	<h1>Dashboard</h1>
+	<h3>Mini Calendar</h3>
+	<h3>Available Trades</h3>
+	<h3>Requested Trades</h3>
+	<h3>Approved Trades</h3>
 </template>

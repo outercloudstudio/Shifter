@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { login, loginWithSavedAccount } from '@/libs/Firebase'
-import { onMounted, ref } from 'vue'
+import { login } from '@/libs/Firebase'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -13,12 +13,6 @@ async function onLogin() {
 
 	router.push('dashboard')
 }
-
-onMounted(async () => {
-	await loginWithSavedAccount()
-
-	router.push('dashboard')
-})
 </script>
 
 <template>
