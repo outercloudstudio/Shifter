@@ -32,8 +32,8 @@
 
 - [x] Create trade
 - [x] Delete trade
-- [ ] Change approved
-- [ ] Change accepted user
+- [x] Change approved
+- [x] Change accepted user
 
 # Vue 3 + TypeScript + Vite
 
