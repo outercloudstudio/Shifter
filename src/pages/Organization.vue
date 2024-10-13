@@ -31,9 +31,6 @@ async function update() {
 
 	if (typeof route.params.id !== 'string') return
 
-	//DEBUG
-	await loginWithSavedAccount()
-
 	organization.value = await getOrganization(route.params.id)
 
 	if (!organization.value) return

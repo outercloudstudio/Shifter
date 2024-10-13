@@ -8,12 +8,14 @@ import {
 import {
 	addDoc,
 	collection,
+	deleteDoc,
 	doc,
 	getDoc,
 	getDocs,
 	getFirestore,
 	or,
 	query,
+	updateDoc,
 	where,
 } from 'firebase/firestore'
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -74,31 +76,60 @@ export async function loginWithSavedAccount() {
 	loggedIn = true
 }
 
-export interface Member {
+export type User = {
 	account: string
-	role: 'member' | 'admin' | 'owner'
-	id: string
+	name: string
 }
 
-export interface Trade {
-	from: string
-	to: string
-	shift: string
-	approved: string
-	id: string
-}
-
-export interface Shift {
-	account: string
-	day: Date
-	time: 'day' | 'night'
-	id: string
-}
-
-export interface Organization {
+export type Organization = {
 	name: string
 	owner: string
 	id: string
+}
+
+export type Role = 'member' | 'admin'
+
+export type Member = {
+	account: string
+	role: Role
+	organization: Organization
+	id: string
+}
+
+export type Shift = {
+	account: string
+	day: Date
+	time: 'day' | 'night'
+	organization: Organization
+	id: string
+}
+
+export type Trade =
+	| {
+			from: string
+			to: unknown
+			shift: string
+			approved: false
+			organization: Organization
+			id: string
+	  }
+	| {
+			from: string
+			to: string
+			shift: string
+			approved: true
+			organization: Organization
+			id: string
+	  }
+
+export async function changeUserName(organization: Organization, name: string) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	organization.name = name
+
+	await updateDoc(doc(db, `organizations/${organization.id}`), organization)
 }
 
 export async function createOrganization(name: string) {
@@ -109,15 +140,47 @@ export async function createOrganization(name: string) {
 	const organization = await addDoc(collection(db, 'organizations'), {
 		name,
 		owner: auth.currentUser.uid,
-	} as Organization)
+	})
 
 	await addDoc(collection(organization, 'members'), {
 		account: auth.currentUser.uid,
-		role: 'owner',
+		role: 'admin',
 	})
 }
 
-export async function getOrganizations(): Promise<Organization[]> {
+export async function deleteOrganization(organization: Organization) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await deleteDoc(doc(db, `organizations/${organization.id}`))
+}
+
+export async function transferOrganizationOwnership(organization: Organization, ownerId: string) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await updateDoc(doc(db, `organizations/${organization.id}`), {
+		name: organization.name,
+		owner: ownerId,
+	} as Organization)
+}
+
+export async function changeOrganizationName(organization: Organization, name: string) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	organization.name = name
+
+	await updateDoc(doc(db, `organizations/${organization.id}`), {
+		name,
+		owner: organization.owner,
+	})
+}
+
+export async function getUserOrganizations(): Promise<Organization[]> {
 	if (!loggedIn) throw new Error('Not logged in!')
 	if (!auth) throw new Error('Not authenticated!')
 	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
@@ -157,6 +220,50 @@ export async function getOrganization(id: string): Promise<Organization | null> 
 	return data
 }
 
+export async function addMember(organization: Organization, account: string, role: Role) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await addDoc(collection(db, `organizations/${organization.id}/members`), {
+		account,
+		role,
+	})
+}
+
+export async function removeMember(member: Member) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await deleteDoc(doc(db, `organizations/${member.organization.id}/members/${member.id}`))
+}
+
+export async function changeMemberRole(member: Member, role: Role) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await updateDoc(doc(db, `organizations/${member.organization.id}/members/${member.id}`), {
+		account: member.account,
+		role,
+	})
+}
+
+export async function getMember(organization: Organization, memberId: string): Promise<Member> {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	const document = await getDoc(doc(db, `organizations/${organization.id}/members/${memberId}`))
+
+	const data = document.data() as Member
+	data.id = document.id
+	data.organization = organization
+
+	return data
+}
+
 export async function getMembers(organization: Organization): Promise<Member[]> {
 	if (!loggedIn) throw new Error('Not logged in!')
 	if (!auth) throw new Error('Not authenticated!')
@@ -170,9 +277,115 @@ export async function getMembers(organization: Organization): Promise<Member[]> 
 	for (const document of memberDocs.docs) {
 		const data = document.data() as Member
 		data.id = document.id
+		data.organization = organization
 
 		members.push(data)
 	}
 
 	return members
+}
+
+export async function createShift(
+	organization: Organization,
+	account: string,
+	day: Date,
+	time: 'day' | 'night'
+) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await addDoc(collection(db, `organizations/${organization.id}/shifts`), {
+		account,
+		day,
+		time,
+	})
+}
+
+export async function deleteShift(shift: Shift) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await deleteDoc(doc(db, `organizations/${shift.organization.id}/shifts/${shift.id}`))
+}
+
+export async function changeShiftTime(shift: Shift, day: Date, time: 'day' | 'night') {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await updateDoc(doc(db, `organizations/${shift.organization.id}/shifts/${shift.id}`), {
+		account: shift.account,
+		day,
+		time,
+	})
+}
+
+export async function createTrade(
+	organization: Organization,
+	from: string,
+	to: string,
+	shift: Shift
+) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await addDoc(collection(db, `organizations/${organization.id}/trades`), {
+		from,
+		to,
+		shift: shift.id,
+		approved: false,
+	})
+}
+
+export async function deleteTrade(trade: Trade) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await deleteDoc(doc(db, `organizations/${trade.organization.id}/trades/${trade.id}`))
+}
+
+export async function changeTradeApproval(trade: Trade, approved: boolean) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await updateDoc(doc(db, `organizations/${trade.organization.id}/trades/${trade.id}`), {
+		from: trade.from,
+		to: trade.to,
+		shift: trade.shift,
+		approved,
+	})
+}
+
+export async function changeTradeAcceptedUser(trade: Trade, acceptedUserId: string) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await updateDoc(doc(db, `organizations/${trade.organization.id}/trades/${trade.id}`), {
+		from: trade.from,
+		to: acceptedUserId,
+		shift: trade.shift,
+		approved: trade.approved,
+	})
+}
+
+export async function acceptTrade(trade: Trade) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await changeTradeAcceptedUser(trade, auth.currentUser.uid)
+}
+
+export async function approveTrade(trade: Trade) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	await changeTradeApproval(trade, true)
 }
