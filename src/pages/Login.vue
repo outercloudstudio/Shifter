@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { login } from '@/libs/Firebase'
+import { loadUser } from '@/libs/User'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -10,6 +11,7 @@ const password = ref('')
 
 async function onLogin() {
 	await login(email.value, password.value)
+	await loadUser()
 
 	router.push('dashboard')
 }

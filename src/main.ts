@@ -11,6 +11,8 @@ import Login from '@pages/Login.vue'
 import Register from '@pages/Register.vue'
 import Trades from '@pages/Trades.vue'
 import Welcome from '@pages/Welcome.vue'
+import { loginWithSavedAccount } from '@libs/Firebase'
+import { loadUser } from '@/libs/User'
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -25,5 +27,8 @@ const router = createRouter({
 		{ path: '/account', component: Account },
 	],
 })
+
+await loginWithSavedAccount()
+await loadUser()
 
 createApp(App).use(router).mount('#app')

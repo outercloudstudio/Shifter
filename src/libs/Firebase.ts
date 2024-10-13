@@ -79,6 +79,7 @@ export async function loginWithSavedAccount() {
 export type User = {
 	account: string
 	name: string
+	id: string
 }
 
 export type Organization = {
@@ -122,14 +123,36 @@ export type Trade =
 			id: string
 	  }
 
-export async function changeUserName(organization: Organization, name: string) {
+export async function getUser(accountId?: string): Promise<User> {
 	if (!loggedIn) throw new Error('Not logged in!')
 	if (!auth) throw new Error('Not authenticated!')
 	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
 
-	organization.name = name
+	const userQuery = query(
+		collection(db, `users`),
+		where('account', '==', accountId ?? auth.currentUser.uid)
+	)
 
-	await updateDoc(doc(db, `organizations/${organization.id}`), organization)
+	const userDocs = await getDocs(userQuery)
+
+	console.log(auth.currentUser.uid)
+
+	if (userDocs.docs.length != 1) throw new Error(`Found ${userDocs.docs.length} users instead of 1!`)
+
+	let data = userDocs.docs[0].data() as User
+	data.id = userDocs.docs[0].id
+
+	return data
+}
+
+export async function changeUserName(user: User, name: string) {
+	if (!loggedIn) throw new Error('Not logged in!')
+	if (!auth) throw new Error('Not authenticated!')
+	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
+
+	user.name = name
+
+	await updateDoc(doc(db, `users/${user.id}`), user)
 }
 
 export async function createOrganization(name: string) {
