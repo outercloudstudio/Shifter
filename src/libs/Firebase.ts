@@ -150,9 +150,10 @@ export async function changeUserName(user: User, name: string) {
 	if (!auth) throw new Error('Not authenticated!')
 	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
 
-	user.name = name
-
-	await updateDoc(doc(db, `users/${user.id}`), user)
+	await updateDoc(doc(db, `users/${user.id}`), {
+		account: user.account,
+		name,
+	})
 }
 
 export async function createOrganization(name: string) {
