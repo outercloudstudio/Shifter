@@ -8,6 +8,7 @@ import {
 import {
 	addDoc,
 	collection,
+	collectionGroup,
 	deleteDoc,
 	doc,
 	getDoc,
@@ -135,8 +136,6 @@ export async function getUser(accountId?: string): Promise<User> {
 
 	const userDocs = await getDocs(userQuery)
 
-	console.log(auth.currentUser.uid)
-
 	if (userDocs.docs.length != 1) throw new Error(`Found ${userDocs.docs.length} users instead of 1!`)
 
 	let data = userDocs.docs[0].data() as User
@@ -211,18 +210,18 @@ export async function getUserOrganizations(): Promise<Organization[]> {
 
 	const organizations: Organization[] = []
 
-	const organizationQuery = query(
-		collection(db, 'organizations'),
-		or(
-			where('owner', '==', auth.currentUser.uid),
-			where('admins', 'array-contains', auth.currentUser.uid)
-		)
+	const membersQuery = query(
+		collectionGroup(db, 'members'),
+		where('account', '==', auth.currentUser.uid)
 	)
 
-	const organizationDocs = await getDocs(organizationQuery)
-	for (const document of organizationDocs.docs) {
-		const data = document.data() as Organization
-		data.id = document.id
+	const membersDocs = await getDocs(membersQuery)
+	for (const document of membersDocs.docs) {
+		const organizationId = document.ref.path.split('/')[1]
+
+		const organizationDocument = await getDoc(doc(db, `organizations/${organizationId}`))
+		const data = organizationDocument.data() as Organization
+		data.id = organizationDocument.id
 
 		organizations.push(data)
 	}
@@ -274,15 +273,23 @@ export async function changeMemberRole(member: Member, role: Role) {
 	})
 }
 
-export async function getMember(organization: Organization, memberId: string): Promise<Member> {
+export async function getMember(organization: Organization, accountId: string): Promise<Member> {
 	if (!loggedIn) throw new Error('Not logged in!')
 	if (!auth) throw new Error('Not authenticated!')
 	if (!auth.currentUser?.uid) throw new Error('No current user uid!')
 
-	const document = await getDoc(doc(db, `organizations/${organization.id}/members/${memberId}`))
+	const memberQuery = query(
+		collection(db, `organizations/${organization.id}/members`),
+		where('account', '==', accountId)
+	)
 
-	const data = document.data() as Member
-	data.id = document.id
+	const memberDocs = await getDocs(memberQuery)
+
+	if (memberDocs.docs.length != 1)
+		throw new Error(`Found ${memberDocs.docs.length} members instead of 1!`)
+
+	const data = memberDocs.docs[0].data() as Member
+	data.id = memberDocs.docs[0].id
 	data.organization = organization
 
 	return data

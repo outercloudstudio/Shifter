@@ -2,7 +2,7 @@
 import NavigationMenu from '@/components/NavigationMenu.vue'
 import { changeUserName } from '@/libs/Firebase'
 import { computed, ref } from 'vue'
-import { user } from '@libs/User'
+import { user } from '@libs/State'
 
 const editMode = ref(false)
 const name = computed(() => user.value?.name ?? 'Loading...')

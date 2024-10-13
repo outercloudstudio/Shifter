@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { login } from '@/libs/Firebase'
-import { loadUser } from '@/libs/User'
+import { loadUser } from '@/libs/State'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 

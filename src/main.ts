@@ -12,7 +12,7 @@ import Register from '@pages/Register.vue'
 import Trades from '@pages/Trades.vue'
 import Welcome from '@pages/Welcome.vue'
 import { loginWithSavedAccount } from '@libs/Firebase'
-import { loadUser } from '@/libs/User'
+import { loadUser } from '@/libs/State'
 
 const router = createRouter({
 	history: createWebHistory(),
